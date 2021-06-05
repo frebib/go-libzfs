@@ -118,6 +118,7 @@ type VDevTree struct {
 	GUID     uint64
 	Parity   uint
 	Path     string
+	Id       uint64
 	Name     string
 	Stat     VDevStat
 	ScanStat PoolScanStat
@@ -166,6 +167,7 @@ func PoolOpen(name string) (pool Pool, err error) {
 
 func poolGetConfig(name string, nv C.nvlist_ptr) (vdevs VDevTree, err error) {
 	var dtype C.char_ptr
+	var id C.uint64_t
 	var vs C.vdev_stat_ptr
 	var ps C.pool_scan_stat_ptr
 	var children C.vdev_children_ptr
@@ -178,6 +180,11 @@ func poolGetConfig(name string, nv C.nvlist_ptr) (vdevs VDevTree, err error) {
 	if vdevs.Type == VDevTypeMissing || vdevs.Type == VDevTypeHole {
 		return
 	}
+
+	if C.nvlist_lookup_uint64(nv, C.sZPOOL_CONFIG_ID, &id) != 0 {
+		return
+	}
+	vdevs.Id = uint64(id)
 
 	vdevs.GUID = uint64(C.get_vdev_guid(nv))
 
